@@ -412,30 +412,30 @@
 [REQ2] space inside integer
   input:    '1 2'
   expected: status=1, stdout=''
-  returned: status=0, stdout='3'
-  stderr:   ''
-  result:   FAIL
+  returned: status=1, stdout=''
+  stderr:   'error: malfored string'
+  result:   PASS
 
 [REQ2] tab inside integer
   input:    '1\t2'
   expected: status=1, stdout=''
-  returned: status=0, stdout='3'
-  stderr:   ''
-  result:   FAIL
+  returned: status=1, stdout=''
+  stderr:   'error: malfored string'
+  result:   PASS
 
 [REQ2] newline inside integer
   input:    '1\n2'
   expected: status=1, stdout=''
-  returned: status=0, stdout='3'
-  stderr:   ''
-  result:   FAIL
+  returned: status=1, stdout=''
+  stderr:   'error: malfored string'
+  result:   PASS
 
 [REQ2] space between digits in list
   input:    '12 34,56'
   expected: status=1, stdout=''
-  returned: status=0, stdout='102'
-  stderr:   ''
-  result:   FAIL
+  returned: status=1, stdout=''
+  stderr:   'error: malfored string'
+  result:   PASS
 
 [REQ2] space between sign and digits
   input:    '+ 1'
@@ -454,16 +454,16 @@
 [REQ2] missing comma
   input:    '1 2'
   expected: status=1, stdout=''
-  returned: status=0, stdout='3'
-  stderr:   ''
-  result:   FAIL
+  returned: status=1, stdout=''
+  stderr:   'error: malfored string'
+  result:   PASS
 
 [REQ2] missing comma between signed integers
   input:    '1 -2'
   expected: status=1, stdout=''
-  returned: status=0, stdout='-1'
-  stderr:   ''
-  result:   FAIL
+  returned: status=1, stdout=''
+  stderr:   'error: malfored string'
+  result:   PASS
 
 [REQ2] semicolon separator
   input:    '1;2'
@@ -553,14 +553,14 @@
   input:    '999999999999999999999999999999'
   expected: status=1, stdout=''
   returned: status=1, stdout=''
-  stderr:   'error: number too large for int'
+  stderr:   'error: number too large'
   result:   PASS
 
 [REQ4] large negative out-of-range value
   input:    '-999999999999999999999999999999'
   expected: status=1, stdout=''
   returned: status=1, stdout=''
-  stderr:   'error: number too large for int'
+  stderr:   'error: number too large'
   result:   PASS
 
 [REQ4] out-of-range positive number canceled by negative
@@ -697,6 +697,6 @@
   result:   PASS
 
 ================================
-Passed: 90
-Failed: 10
+Passed: 96
+Failed: 4
 ================================

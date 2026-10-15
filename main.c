@@ -17,10 +17,16 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	int	   sum	 = 0;
-	char	  *start = &argv[1][0];
-	char	  *sp;
+	int   sum   = 0;
+	char *start = &argv[1][0];
+	char *sp;
+	errno		     = 0;
 	const long first_num = strtol(argv[1], &sp, 10);
+
+	if (errno == ERANGE) {
+		fprintf(stderr, "error: number too large\n");
+		return EXIT_FAILURE;
+	}
 
 	if ((start == sp) ||
 	    (start != sp && *sp != ',' && *sp != '\0' && !isspace(*sp))) {
@@ -37,16 +43,24 @@ int main(int argc, char *argv[])
 
 	while (*sp != '\0') {
 		while (isspace(*sp)) sp++;
+
 		if (*sp == '\0')
 			break;
 
-		if (*sp == ',')
-			sp++;
+		if (*sp != ',') {
+			fprintf(stderr, "error: malfored string\n");
+			return EXIT_FAILURE;
+		}
 
-		start = sp;
-
+		sp++;
+		start	       = sp;
 		errno	       = 0;
 		const long num = strtol(start, &sp, 10);
+
+		if (errno == ERANGE) {
+			fprintf(stderr, "error: number too large\n");
+			return EXIT_FAILURE;
+		}
 
 		if (start == sp) {
 			fprintf(stderr, "error: malformed string\n");
@@ -66,6 +80,5 @@ int main(int argc, char *argv[])
 	}
 
 	printf("%d\n", sum);
-
 	return EXIT_SUCCESS;
 }
