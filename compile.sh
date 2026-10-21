@@ -1,2 +1,2 @@
 #!/bin/bash
-gcc main.c -w -std=c23 -o main.bin
+cc -g -O0 -std=c23 -Wall -Wextra -Wpedantic -Wconversion -Wshadow main.c -o main.bin

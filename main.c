@@ -1,84 +1,110 @@
-#include <ctype.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdckdint.h>
+#include <string.h>
 
-static inline bool long_fits_int(const long n)
+static char *inc_buf(char *buf, size_t *size)
 {
-	return !ckd_add(&(int){ 0 }, n, 0);
+	char *tmp = realloc(buf, (*size + 1) * sizeof(*buf));
+	if (!tmp) {
+		fprintf(stderr, "inc_buf: realloc failed\n");
+		free(buf);
+		exit(EXIT_FAILURE);
+	}
+
+	(*size)++;
+	return tmp;
 }
 
-int main(int argc, char *argv[])
+void print_escape(const char *str, const size_t line_count, const size_t size)
 {
-	if (argc != 2) {
-		fprintf(stderr, "error: exactly 1 argument required\n");
-		return EXIT_FAILURE;
+	printf("buf_size: %zu, line_count: %zu, strlen: %zu, str: \"", size,
+	       line_count, strlen(str));
+
+	for (size_t i = 0; i < size; i++) {
+		switch (str[i]) {
+		case '\n': printf("\\n"); break;
+		case '\0': printf("\\0"); break;
+		default: putchar(str[i]);
+		}
 	}
 
-	int   sum   = 0;
-	char *start = &argv[1][0];
-	char *sp;
-	errno		     = 0;
-	const long first_num = strtol(argv[1], &sp, 10);
+	puts("\"");
+}
 
-	if (errno == ERANGE) {
-		fprintf(stderr, "error: number too large\n");
-		return EXIT_FAILURE;
-	}
+void uniq_lines(void)
+{
+	char  *buf	  = NULL;
+	size_t buf_size	  = 0;
+	size_t line_count = 0;
 
-	if ((start == sp) ||
-	    (start != sp && *sp != ',' && *sp != '\0' && !isspace(*sp))) {
-		fprintf(stderr, "error: malformed string\n");
-		return EXIT_FAILURE;
-	}
-
-	if (!long_fits_int(first_num)) {
-		fprintf(stderr, "error: number too large for int\n");
-		return EXIT_FAILURE;
-	}
-
-	sum += (int)first_num;
-
-	while (*sp != '\0') {
-		while (isspace(*sp)) sp++;
-
-		if (*sp == '\0')
-			break;
-
-		if (*sp != ',') {
-			fprintf(stderr, "error: malfored string\n");
-			return EXIT_FAILURE;
+	int c = 0;
+	while ((c = getchar()) != EOF) {
+		if (c == '\0') {
+			fprintf(stderr,
+				"error: '\\0' is not allowed in input\n");
+			free(buf);
+			exit(EXIT_FAILURE);
 		}
 
-		sp++;
-		start	       = sp;
-		errno	       = 0;
-		const long num = strtol(start, &sp, 10);
+		buf = inc_buf(buf, &buf_size);
 
-		if (errno == ERANGE) {
-			fprintf(stderr, "error: number too large\n");
-			return EXIT_FAILURE;
-		}
-
-		if (start == sp) {
-			fprintf(stderr, "error: malformed string\n");
-			return EXIT_FAILURE;
-		}
-
-		if (long_fits_int(num)) {
-			if (ckd_add(&sum, sum, num)) {
-				fprintf(stderr,
-					"error: sum too large for int\n");
-				return EXIT_FAILURE;
-			}
+		if ((char)c == '\n') {
+			buf[buf_size - 1] = '\0';
+			line_count++;
 		} else {
-			fprintf(stderr, "error: number too large for int\n");
-			return EXIT_FAILURE;
+			buf[buf_size - 1] = (char)c;
 		}
 	}
 
-	printf("%d\n", sum);
+	if (ferror(stdin)) {
+		perror("getchar");
+		free(buf);
+		exit(EXIT_FAILURE);
+	}
+
+	buf = inc_buf(buf, &buf_size);
+
+	if (buf[buf_size - 1] != '\n')
+		line_count++;
+
+	buf[buf_size - 1] = '\0';
+
+	char **lines = malloc(line_count * sizeof(char *));
+	if (!lines) {
+		fprintf(stderr, "malloc failed\n");
+		free(buf);
+		exit(EXIT_FAILURE);
+	}
+
+	int t = 0;
+	for (char *p = buf; p < (char *)(buf + buf_size);
+	     p += (strlen(p) + 1)) {
+		lines[t] = p;
+		t++;
+	}
+
+	// for every line total
+	for (size_t i = 0; i < line_count; i++) {
+		bool found = false;
+
+		// for every line up until me
+		for (size_t j = 0; j < i; j++) {
+			if (strcmp(lines[i], lines[j]) == 0) {
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			puts(lines[i]);
+	}
+
+	free(lines);
+	free(buf);
+}
+
+int main(void)
+{
+	uniq_lines();
 	return EXIT_SUCCESS;
 }
